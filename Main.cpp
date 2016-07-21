@@ -38,7 +38,7 @@ extern string data(int& cnt, int Pad);
 u_long LookupAddress(const char* pcHost);
 SOCKET EstablishConnection(u_long nRemoteAddr, u_short nPort);
 bool SendPacket(SOCKET sd);
-bool ReadReply(SOCKET sd, int Count);
+int ReadReply(SOCKET sd, int Count);
 char str2char( string src, char* tmpByte);
 char FileName[80];
 char Packet[18];
@@ -110,23 +110,16 @@ int main(int argc, char* argv[])
     		cin >> Attempts;
     		cout << string(2, '\n');	//Add 2 blank lines oon screen
     	}
-    	cout << "Enter the starting number (1-" << Attempts-1 << ")  ";
+    	cout << "Enter the starting number (1-" << Attempts << ")  ";
     	cin >> strtCnt;
     	cout << string(2, '\n');
-    	while (strtCnt >= Attempts)
+    	while (strtCnt > Attempts)
     	{
-    		cout << "The starting number must be " << Attempts-1 << " or lower."  << endl
-    		     << "Enter a number from 1-  " << Attempts-1;
+    		cout << "The starting number must be " << Attempts << " or lower."  << endl
+    		     << "Enter a number from 1-  " << Attempts;
     		cin >> strtCnt;
     		cout << string(2, '\n');	//Add 2 blank lines on screen
     	}
-    	/*	while (qty < 1)
-    	{
-    		cout << "You need to try at least 1 password!" << endl
-        	<< "Enter a number from 1-" << val-1 << endl;
-    		cin >> strtCnt;
-    		cout << string(2, '\n');	//Add 2 blank lines on screen
-    	}	*/
     	cout << "Enter the number of preceding Zeros (0-7)  ";
     	cin >> zeroPad;
     	if (zeroPad > 0)
@@ -140,7 +133,8 @@ int main(int argc, char* argv[])
 				<< "Enter Y to continue N to return   ";
     	cin >> yn;
     	cout << string(2, '\n');	//Add 2 blank lines on screen
-    }
+   	}
+
     if (CreateFileName()==1)
     {
     	logfile.open (FileName);
@@ -151,7 +145,6 @@ int main(int argc, char* argv[])
     		logfile.close();
     	}
     }
-
 
 // Start Winsock up
     WSAData wsaData;
@@ -194,14 +187,15 @@ int main(int argc, char* argv[])
     int Count =strtCnt ;
     int start_s=clock();
     int k = 0;
-    bool loop = true;
+    int loop = 1;
 
-    while ((loop) && (Count <= Attempts)) // && (input != 'Q'||'q'))
+    while ((loop ==1) && (Count <= Attempts))
     {
     	string datapacket = data(Count, zeroPad);// Call the password generator
 
-        //Get the packet ready to go out on the wire
-        //
+    	 //Get the packet ready to go out on the wire
+    	 // It needs to be a character array.
+
         str2char(datapacket, Packet);
         SendPacket(sd);
         loop = ReadReply(SOCKET(sd), Count);
@@ -212,7 +206,8 @@ int main(int argc, char* argv[])
 
         else if (k == 500)
   	   	{
-        	cout << "\r\tcurrent password = "<< (Count-1) << "\t\t" << (Count-1)- strtCnt << " passwords checked so far ";
+        	cout << "\r\tcurrent password = "<< (Count-1) << "\t\t" << (Count-1)- strtCnt
+        		 << " passwords checked so far ";
         	logfile.open(FileName, ios::out | ios::app );
 			logfile << "Last checked " <<(Count-1)<< "\n";
         	logfile.close();
@@ -224,11 +219,11 @@ int main(int argc, char* argv[])
             		break;
             	}
     }
-       int stop_s=clock();
+    int stop_s=clock();
     cout << "\nTested passwords " << strtCnt << "-" << (Count - 1) << " in "
     	 << (stop_s-start_s)/float(CLOCKS_PER_SEC) << " Seconds" << endl;
 
-    if(loop == false)
+    if(loop == 0)
     {
     	cout << "\n Your password is " << (Count - 1) << endl;
     	cout << string(2, '\n');	//Add 2 blank lines on screen
@@ -236,50 +231,46 @@ int main(int argc, char* argv[])
     	logfile << "Your password is " <<(Count-1)<< "\n";
     	logfile.close();
     }
-    else
+    else if (loop == -1)
     {
     	cout << "No valid password found" << endl
     		 <<	"Last Password tested = " << (Count - 1) << endl;
     	logfile.open(FileName, ios::out | ios::app );
     	logfile << "No valid password found \nLast Password tested =  " <<(Count-1)<< "\n"
-    			<< (Count-1)- strtCnt << " passwords checked" << "in "
+    			<< (Count-1)- strtCnt << " passwords checked " << "in "
     	    	<< (stop_s-start_s)/float(CLOCKS_PER_SEC) << " Seconds" << endl;
     	logfile.close();
     	cout << string(2, '\n');	//Add 2 blank lines on screen
     }
 
-        //cout << "result is " << setw(2) << uppercase << hex  << packet << endl;
-
-
-#if defined(SHUTDOWN_DELAY)
-    // Delay for a bit, so we can start other clients.  This is strictly
-    // for testing purposes, so you can convince yourself that the
-    // server is handling more than one connection at a time.
+// Delay for a bit,
+    #if defined(SHUTDOWN_DELAY)
     //cout << "Will shut down in " << kShutdownDelay <<
-            //" seconds... (one dot per second): " << flush;
-    for (int i = 0; i < kShutdownDelay; ++i) {
+    //" seconds... (one dot per second): " << flush;
+    for (int i = 0; i < kShutdownDelay; ++i)
+    {
         Sleep(1000);
         //cout << '.' << flush;
     }
     cout << endl;
-#endif
+	#endif
 
-    // Shut connection down
+// Shut connection down
     cout << "Shutting connection down..." << flush;
-    if (ShutdownConnection(sd)) {
+    if (ShutdownConnection(sd))
+    {
         cout << "Connection is down." << endl;
     }
-    else {
+    else
+    {
         cout << endl << WSAGetLastErrorMessage("Shutdown connection") <<
                 endl;
     }
-    //cout << "All done!" << endl;
 
-    // Shut Winsock back down and take off.
+// Shut Winsock back down and take off.
     WSACleanup();
     return 0;
-}	//		END OF MAIN
-	//
+}	////////////////////////////// END OF MAIN////////////////////////////////////
 
 
 /////////////////////// CreateFileName /////////////////////////////////
@@ -359,27 +350,34 @@ bool SendPacket(SOCKET sd)
 // Read the reply packet and check it for sanity.  Returns True if  //
 // no password match, returns False on a match.   ////////////////////
 
-bool ReadReply(SOCKET sd, int counts)
+int ReadReply(SOCKET sd, int counts)
 {
     // Read reply from server and compare the data to known values
 
-    char acReadBuffer[kBufferSize];
+	char acReadBuffer[kBufferSize];
     unsigned int nTotalBytes = 0;
     char ValidPass[7]={0x06,0x30,0x31,0x30,0x33,0x37,0x0D};
     char InvalidPass[9]={0x06,0x30,0x31,0x32,0x30,0x35,0x33,0x30,0x0D};
     char BadCheck[9]={0x15,0x30,0x31,0x30,0x31,0x30,0x32,0x35,0x0D};
-    bool loops;
     while (nTotalBytes < sizeof acReadBuffer[kBufferSize])
     {
     	int nNewBytes = recv(sd, acReadBuffer + nTotalBytes,
         kBufferSize - nTotalBytes, 0);
-        if (nNewBytes == SOCKET_ERROR) {
-        return -1;
+        if (nNewBytes == SOCKET_ERROR)
+        {
+        	cerr << "\nSocket Error!\n " << endl;
+        	logfile.open(FileName, ios::out | ios::app );
+        	logfile << "Socket Error!\nPassword " <<(counts-1) << "\t" << acReadBuffer << endl;
+        	logfile.close();
+        	return -1;
     }
     else if (nNewBytes == 0)
     {
-    	cerr << "Connection closed by peer." << endl;
-    	return 0;
+    		cerr << "\nConnection closed by peer." << endl;
+    		logfile.open(FileName, ios::out | ios::app );
+    		logfile << "Connection closed by peer!";
+    		logfile.close();
+    		return -1;
 	}
 	nTotalBytes += nNewBytes;
     }
@@ -387,7 +385,7 @@ bool ReadReply(SOCKET sd, int counts)
     if (strncmp(acReadBuffer, ValidPass, nTotalBytes) == 0)
     {
 		cout << "\n\n\tWe found the password!" << endl;
-		loops = false;
+		return 0;
 	}
 	else if(strncmp(acReadBuffer, BadCheck, nTotalBytes) == 0)
 	{
@@ -397,14 +395,20 @@ bool ReadReply(SOCKET sd, int counts)
     	logfile.open(FileName, ios::out | ios::app );
     	logfile << "Bad checksum \nPassword " <<(counts-1) << "\t" << acReadBuffer;
     	logfile.close();
-        loops = true;
+    	return -1;
     }
 	else if(strncmp(acReadBuffer, InvalidPass, nTotalBytes) == 0)
-		{
-	        loops = true;
-	    }
-    return loops;
+	{
+		return 1;
+	}
+	else
+	{
+		cout << "\n\tSomething broke!" << endl;
+		return -1;
+	}
+return 0;
 }
+
 
 //////////////////////// str2char ////////////////////////////////////////
 // Convert the Hexidecimal encoded string to a Hex encoded char array	//
