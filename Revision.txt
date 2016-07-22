@@ -1,0 +1,15 @@
+Idec Password Cracker1.1 .exe
+:Create and write to log file.
+:preceding Zero function fixed.
+
+Idec Password Cracker1.2.exe
+:Create and write to date and time stamped log file. 
+
+Idec Password Cracker1.3.exe
+:Fixed error checking
+:fixed start menu.
+:some code cleanup.
+
+Idec Password Cracker1.4.exe
+:Password file now created in directory C:\Log
+improved error handling in creating log file.

@@ -129,22 +129,39 @@ int main(int argc, char* argv[])
     	cout << string(2, '\n');	//Add 2 blank lines on screen
 
     	cout << "You have chosen to test " << Attempts-strtCnt << " Passwords " << endl
-    			<< "The range is " << strtCnt << " to " << Attempts << endl <<endl
-				<< "Enter Y to continue N to return   ";
+    		 << "The range is " << strtCnt << " to " << Attempts << endl <<endl
+    		 << "Enter Y to continue N to return   ";
     	cin >> yn;
     	cout << string(2, '\n');	//Add 2 blank lines on screen
    	}
-
     if (CreateFileName()==1)
     {
     	logfile.open (FileName);
-    	if(logfile.is_open())
+    	if (logfile.fail())
     	{
-    		cout << "Logfile created successfully" << endl;
-    		logfile << FileName << "\n";
-    		logfile.close();
+    		CreateDirectory("C:\\Log", NULL); // From windows.h, creates a folder
+    		logfile.open(FileName);
     	}
-    }
+        if(logfile.is_open())
+        {
+        	cout << "Logfile " << FileName << " created successfully" << endl;
+        	logfile << FileName <<endl << endl
+        	<< "checking " << Attempts-strtCnt
+        	<< " passwords: " << strtCnt << " to " << Attempts <<endl
+			<< "At Address " << argv[1] <<  endl << endl << "\n";
+        	logfile.close();
+        }
+        else
+        	{
+        		cout << "Logfile not created!!! continue?"	<< endl
+        			 << "Enter Y to continue N to exit" << endl;
+        		cin >> yn;
+        		if (!((yn == 'Y') || (yn == 'y')))
+        			{
+        			return 0;
+        			}
+        	}
+   	}
 
 // Start Winsock up
     WSAData wsaData;
@@ -281,9 +298,9 @@ int CreateFileName()
      time_t t = time(0);   // get time now
      struct tm * now = localtime( & t );
      //char buffer[80];
-     strftime (FileName,80,"passwords %m-%d_%H%M.txt",now);
+     strftime (FileName,80,"C:/Log/passwords %m-%d_%H%M.txt",now);
      std::string name (FileName);
-     std::cout<<"Created password file "<< (FileName)<< std::endl;
+     std::cout<<"Creating password logfile "<< (FileName)<< std::endl;
      std::string tempfile;
      return 1;
 }
